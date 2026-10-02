@@ -1,837 +1,310 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>抽奖卡片</title>
 <style>
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:system-ui, sans-serif;
+}
+body{
+    min-height:100vh;
+    transition: background 0.4s, color 0.4s;
+    padding:20px;
+}
+body.dark{
+    background:#12141d;
+    color:#eee;
+}
+body.light{
+    background:#f8f9fa;
+    color:#222;
+}
+.container{
+    max-width:1200px;
+    margin:0 auto;
+    text-align:center;
+}
+.top-bar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:20px;
+}
+button{
+    padding:10px 22px;
+    border:none;
+    border-radius:8px;
+    font-size:16px;
+    cursor:pointer;
+    transition:0.2s;
+}
+#startBtn{
+    background:#3671e9;
+    color:white;
+}
+#startBtn:disabled{
+    background:#88a8ee;
+    cursor:not-allowed;
+}
+#themeBtn{
+    background:#444;
+    color:white;
+}
+body.light #themeBtn{
+    background:#ddd;
+    color:#111;
+}
+.card-wrap{
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap:18px;
+    justify-items:center;
+}
+.card{
+    width:297px;
+    height:427px;
+    border-radius:14px;
+    overflow:hidden;
+    border:3px solid #777;
+    transition: all 0.25s;
+    position:relative;
+}
+/* 不间断摇摆动画 */
+@keyframes swing {
+    0% { transform: rotate(-3deg); }
+    50% { transform: rotate(3deg); }
+    100% { transform: rotate(-3deg); }
+}
+.card.swing{
+    animation: swing 0.28s ease-in-out infinite;
+}
+.card.selected{
+    animation: selectPop 0.6s ease-out;
+    border-color:#ffd700;
+    box-shadow:0 0 24px #ffd700;
+}
+@keyframes selectPop{
+    0%{transform:scale(1)}
+    50%{transform:scale(1.06)}
+    100%{transform:scale(1)}
+}
+.card img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+}
+.card-desc{
+    position:absolute;
+    bottom:0;
+    left:0;
+    width:100%;
+    padding:12px;
+    background:rgba(0,0,0,0.65);
+    color:white;
+    font-size:15px;
+}
+/* 屏幕抖动特效 */
+@keyframes shakeScreen{
+    0%,100% { transform: translate(0,0); }
+    10% { transform: translate(-6px,6px); }
+    20% { transform: translate(6px,-6px); }
+    30% { transform: translate(-6px,-6px); }
+    40% { transform: translate(6px,6px); }
+    50% { transform: translate(-4px,4px); }
+    60% { transform: translate(4px,-4px); }
+    70% { transform: translate(-4px,-4px); }
+    80% { transform: translate(4px,4px); }
+    90% { transform: translate(-2px,2px); }
+}
+.shake-all{
+    animation: shakeScreen 0.7s ease-out;
+}
+/* 金色粒子 */
+.particle{
+    position:fixed;
+    pointer-events:none;
+    width:12px;
+    height:12px;
+    background:#ffd700;
+    border-radius:50%;
+    z-index:999;
+}
+.visit-count{
+    margin-top:24px;
+    font-size:15px;
+    transition:color 0.3s;
+}
+body.dark .visit-count{
+    color:#dddddd;
+}
+body.light .visit-count{
+    color:#333333;
+}
+/* 响应式适配小屏幕 */
+@media (max-width:980px){
+    .card-wrap{
+        grid-template-columns: repeat(2,1fr);
     }
-
-    :root {
-        --bg-color: #f5f7fa;
-        --card-bg: #ffffff;
-        --card-border: #e4e7ed;
-        --text-color: #303133;
-        --shadow-normal: rgba(0, 0, 0, 0.08);
-        --shadow-active: rgba(64, 158, 255, 0.45);
-        --active-border: #409eff;
-        --winner-glow-white: rgba(255, 255, 255, 0.9);
-        --winner-glow-gold: rgba(255, 204, 60, 0.95);
-        --winner-glow-gold-big: rgba(255, 215, 0, 1);
-        --winner-glow-gold-super: rgba(255, 225, 30, 1);
-        --btn-bg: #409eff;
-        --btn-hover: #66b1ff;
-        --btn-disable: #a0cfff;
-        --popup-bg: #ffffff;
-        --popup-border: #e4e7ed;
-        --popup-text: #303133;
-        --more-btn-bg: #ffffff;
-        --more-btn-text: #333333;
-        --more-btn-border: #dcdfe6;
-        --transition: all 0.3s ease;
+    .card{
+        width:min(297px, 90vw);
+        height:min(427px, calc(90vw * 427 / 297));
     }
-
-    .dark {
-        --bg-color: #0f1419;
-        --card-bg: #1c232d;
-        --card-border: #2c3542;
-        --text-color: #e6e8eb;
-        --shadow-normal: rgba(0, 0, 0, 0.35);
-        --shadow-active: rgba(100, 180, 255, 0.35);
-        --active-border: #69b1ff;
-        --winner-glow-white: rgba(255, 255, 255, 0.85);
-        --winner-glow-gold: rgba(255, 210, 70, 0.9);
-        --winner-glow-gold-big: rgba(255, 220, 80, 1);
-        --winner-glow-gold-super: rgba(255, 230, 60, 1);
-        --btn-bg: #3a8ee6;
-        --btn-hover: #539ff0;
-        --btn-disable: #5c7090;
-        --popup-bg: #1c232d;
-        --popup-border: #3a4556;
-        --popup-text: #e6e8eb;
-        --more-btn-bg: #f7f8fa;
-        --more-btn-text: #222222;
-        --more-btn-border: #cfd3da;
+}
+@media (max-width:620px){
+    .card-wrap{
+        grid-template-columns: repeat(1,1fr);
     }
-
-    html, body {
-        min-height: 100vh;
-    }
-
-    body {
-        background-color: var(--bg-color);
-        color: var(--text-color);
-        padding: clamp(12px, 2vw, 20px);
-        font-family: "Segoe UI", system-ui, sans-serif;
-        transition: background-color 0.5s, color 0.5s;
-        position: relative;
-        overflow-x: hidden;
-    }
-
-    /* 普通金色中奖屏幕震动 */
-    .screen-shake {
-        animation: screenShake 0.5s ease-in-out;
-    }
-
-    /* game_3 超级大奖强震荡 */
-    .screen-shake-big {
-        animation: screenShakeBig 0.8s ease-in-out;
-    }
-
-    /* game_5 终极奖品 超夸张震动 */
-    .screen-shake-super {
-        animation: screenShakeSuper 1.0s ease-in-out;
-    }
-
-    @keyframes screenShake {
-        0%, 100% { transform: translate3d(0, 0, 0); }
-        10% { transform: translate3d(-5px, 3px, 0); }
-        20% { transform: translate3d(5px, -3px, 0); }
-        30% { transform: translate3d(-4px, -4px, 0); }
-        40% { transform: translate3d(4px, 4px, 0); }
-        50% { transform: translate3d(-3px, 5px, 0); }
-        60% { transform: translate3d(3px, -5px, 0); }
-        70% { transform: translate3d(-5px, -2px, 0); }
-        80% { transform: translate3d(5px, 2px, 0); }
-        90% { transform: translate3d(-2px, -3px, 0); }
-    }
-
-    @keyframes screenShakeBig {
-        0%, 100% { transform: translate3d(0, 0, 0); }
-        10% { transform: translate3d(-10px, 6px, 0); }
-        20% { transform: translate3d(10px, -6px, 0); }
-        30% { transform: translate3d(-8px, -8px, 0); }
-        40% { transform: translate3d(8px, 8px, 0); }
-        50% { transform: translate3d(-6px, 10px, 0); }
-        60% { transform: translate3d(6px, -10px, 0); }
-        70% { transform: translate3d(-10px, -4px, 0); }
-        80% { transform: translate3d(10px, 4px, 0); }
-        90% { transform: translate3d(-4px, -6px, 0); }
-    }
-
-    @keyframes screenShakeSuper {
-        0%, 100% { transform: translate3d(0,0,0); }
-        10% { transform: translate3d(-14px, 8px, 0); }
-        15% { transform: translate3d(14px, -8px, 0); }
-        20% { transform: translate3d(-12px, -12px, 0); }
-        25% { transform: translate3d(12px, 12px, 0); }
-        30% { transform: translate3d(-10px, 14px, 0); }
-        35% { transform: translate3d(10px, -14px, 0); }
-        40% { transform: translate3d(-14px, -6px, 0); }
-        45% { transform: translate3d(14px, 6px, 0); }
-        50% { transform: translate3d(-8px, 10px, 0); }
-        55% { transform: translate3d(8px, -10px, 0); }
-        60% { transform: translate3d(-12px, -8px, 0); }
-        65% { transform: translate3d(12px, 8px, 0); }
-        70% { transform: translate3d(-10px, 12px, 0); }
-        75% { transform: translate3d(10px, -12px, 0); }
-        80% { transform: translate3d(-6px, 6px, 0); }
-        85% { transform: translate3d(6px, -6px, 0); }
-        90% { transform: translate3d(-4px, -4px, 0); }
-        95% { transform: translate3d(4px, 4px, 0); }
-    }
-
-    .wrap {
-        max-width: clamp(400px, 92vw, 620px);
-        margin: 0 auto;
-        display: flex;
-        flex-direction: column;
-        gap: clamp(14px, 2vw, 18px);
-    }
-
-    .header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 10px;
-    }
-
-    h1 {
-        font-size: clamp(18px, 3vw, 22px);
-        font-weight: 600;
-    }
-
-    .btn-group {
-        display: flex;
-        gap: 8px;
-    }
-
-    .btn {
-        padding: clamp(6px,1vw,8px) clamp(14px,2vw,18px);
-        border: none;
-        border-radius: 10px;
-        background: var(--btn-bg);
-        color: white;
-        font-size: clamp(12px, 2vw, 14px);
-        cursor: pointer;
-        transition: var(--transition);
-    }
-
-    .btn:hover:not(:disabled) {
-        background: var(--btn-hover);
-        transform: translateY(-2px);
-    }
-
-    .btn:disabled {
-        background: var(--btn-disable);
-        cursor: not-allowed;
-        transform: none;
-    }
-
-    .card-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: clamp(6px,1.5vw,12px);
-    }
-
-    .card {
-        position: relative;
-        aspect-ratio: 297 / 427;
-        background: var(--card-bg);
-        border: 2px solid var(--card-border);
-        border-radius: 12px;
-        box-shadow: 0 4px 12px var(--shadow-normal);
-        overflow: hidden;
-        transition: all 0.25s ease;
-        cursor: pointer;
-        transform-origin: top center;
-    }
-
-    .card img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        display: block;
-        pointer-events: none;
-    }
-
-    .card.active {
-        border-color: var(--active-border);
-        box-shadow: 0 0 18px var(--shadow-active);
-        transform: scale(1.03);
-    }
-
-    .card.winner-white {
-        animation: winnerBounceWhite 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-        border-color: var(--active-border);
-        z-index: 2;
-    }
-
-    .card.winner-gold {
-        animation: winnerBounceGold 1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-        border-color: #ffcf33;
-        z-index: 2;
-    }
-
-    /* game_3 超级大奖：恒定不间断钟摆，提速 */
-    .card.winner-gold-big {
-        border-color: #ffd700;
-        z-index: 2;
-        animation:
-            winnerBounceGoldBig 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
-            pendulumLoopBig 1.6s ease-in-out infinite;
-    }
-
-    /* game_4 奖品4：恒定不间断钟摆，提速 */
-    .card.winner-gold-medium {
-        border-color: #ffcf33;
-        z-index: 2;
-        animation:
-            winnerBounceGoldMedium 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
-            pendulumLoopMedium 1.8s ease-in-out infinite;
-    }
-
-    /* game_5 终极奖品 超大幅度摇摆 */
-    .card.winner-gold-super {
-        border-color: #ffe128;
-        z-index: 3;
-        animation:
-            winnerBounceGoldSuper 0.65s cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
-            pendulumLoopSuper 1.4s ease-in-out infinite;
-    }
-
-    @keyframes winnerBounceWhite {
-        0% {
-            transform: scale(1);
-            box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
-        }
-        35% {
-            transform: scale(1.1);
-            box-shadow: 0 0 36px 12px var(--winner-glow-white);
-        }
-        60% {
-            transform: scale(1.04);
-            box-shadow: 0 0 26px 8px var(--winner-glow-white);
-        }
-        100% {
-            transform: scale(1.06);
-            box-shadow: 0 0 28px 10px var(--winner-glow-white);
-        }
-    }
-
-    @keyframes winnerBounceGold {
-        0% {
-            transform: scale(1);
-            box-shadow: 0 0 0 0 rgba(255, 204, 60, 0);
-        }
-        30% {
-            transform: scale(1.12);
-            box-shadow: 0 0 40px 14px var(--winner-glow-gold);
-        }
-        55% {
-            transform: scale(1.05);
-            box-shadow: 0 0 30px 10px var(--winner-glow-gold);
-        }
-        80% {
-            transform: scale(1.09);
-            box-shadow: 0 0 34px 12px var(--winner-glow-gold);
-        }
-        100% {
-            transform: scale(1.07);
-            box-shadow: 0 0 32px 11px var(--winner-glow-gold);
-        }
-    }
-
-    @keyframes winnerBounceGoldBig {
-        0% {
-            transform: scale(1);
-            box-shadow: 0 0 0 0 rgba(255, 215, 0, 0);
-        }
-        25% {
-            transform: scale(1.18);
-            box-shadow: 0 0 48px 18px var(--winner-glow-gold-big);
-        }
-        50% {
-            transform: scale(1.06);
-            box-shadow: 0 0 36px 12px var(--winner-glow-gold-big);
-        }
-        75% {
-            transform: scale(1.14);
-            box-shadow: 0 0 44px 16px var(--winner-glow-gold-big);
-        }
-        100% {
-            transform: scale(1.1);
-            box-shadow: 0 0 40px 14px var(--winner-glow-gold-big);
-        }
-    }
-
-    @keyframes winnerBounceGoldMedium {
-        0% {
-            transform: scale(1);
-            box-shadow: 0 0 0 0 rgba(255, 204, 60, 0);
-        }
-        30% {
-            transform: scale(1.13);
-            box-shadow: 0 0 38px 13px var(--winner-glow-gold);
-        }
-        55% {
-            transform: scale(1.05);
-            box-shadow: 0 0 28px 9px var(--winner-glow-gold);
-        }
-        80% {
-            transform: scale(1.1);
-            box-shadow: 0 0 32px 11px var(--winner-glow-gold);
-        }
-        100% {
-            transform: scale(1.08);
-            box-shadow: 0 0 30px 10px var(--winner-glow-gold);
-        }
-    }
-
-    @keyframes winnerBounceGoldSuper {
-        0% {
-            transform: scale(1);
-            box-shadow: 0 0 0 0 rgba(255, 225, 30, 0);
-        }
-        20% {
-            transform: scale(1.22);
-            box-shadow: 0 0 60px 22px var(--winner-glow-gold-super);
-        }
-        45% {
-            transform: scale(1.08);
-            box-shadow: 0 0 45px 16px var(--winner-glow-gold-super);
-        }
-        70% {
-            transform: scale(1.16);
-            box-shadow: 0 0 52px 19px var(--winner-glow-gold-super);
-        }
-        100% {
-            transform: scale(1.12);
-            box-shadow: 0 0 46px 17px var(--winner-glow-gold-super);
-        }
-    }
-
-    /* 不间断循环钟摆 大奖 */
-    @keyframes pendulumLoopBig {
-        0% { transform: scale(1.1) rotate(-12deg); }
-        50% { transform: scale(1.1) rotate(12deg); }
-        100% { transform: scale(1.1) rotate(-12deg); }
-    }
-    /* 不间断循环钟摆 奖品4、5、6，幅度更小 */
-    @keyframes pendulumLoopMedium {
-        0% { transform: scale(1.08) rotate(-8deg); }
-        50% { transform: scale(1.08) rotate(8deg); }
-        100% { transform: scale(1.08) rotate(-8deg); }
-    }
-    /* 终极奖品超大摇摆 */
-    @keyframes pendulumLoopSuper {
-        0% { transform: scale(1.12) rotate(-14deg); }
-        50% { transform: scale(1.12) rotate(14deg); }
-        100% { transform: scale(1.12) rotate(-14deg); }
-    }
-
-    .particle {
-        position: absolute;
-        border-radius: 50%;
-        pointer-events: none;
-        z-index: 3;
-    }
-
-    .particle.white {
-        width: 8px;
-        height: 8px;
-        background: #ffffff;
-        box-shadow: 0 0 10px #ffffff, 0 0 18px rgba(255, 255, 255, 0.8);
-    }
-
-    .particle.gold {
-        width: 11px;
-        height: 11px;
-        background: radial-gradient(circle at 30% 30%, #fff4b8, #ffb800 60%, #ff8a00);
-        box-shadow: 0 0 14px #ffcf33, 0 0 24px rgba(255, 180, 0, 0.9);
-    }
-
-    .particle.gold-big {
-        width: 16px;
-        height: 16px;
-        background: radial-gradient(circle at 30% 30%, #fffbe6, #ffd24d 50%, #ff9500);
-        box-shadow: 0 0 22px #ffe27a, 0 0 36px rgba(255, 190, 0, 1);
-    }
-
-    .particle.gold-medium {
-        width: 13px;
-        height: 13px;
-        background: radial-gradient(circle at 30% 30%, #fff4b8, #ffc54d 55%, #ffa200);
-        box-shadow: 0 0 16px #ffd54d, 0 0 28px rgba(255, 170, 0, 0.95);
-    }
-
-    .particle.gold-super {
-        width: 19px;
-        height: 19px;
-        background: radial-gradient(circle at 30% 30%, #fffde8, #ffe047 50%, #ffaa00);
-        box-shadow: 0 0 26px #ffed66, 0 0 42px rgba(255, 220, 0, 1);
-    }
-
-    .screen-particle {
-        position: fixed;
-        border-radius: 50%;
-        pointer-events: none;
-        z-index: 50;
-    }
-
-    .more-btn {
-        position: absolute;
-        left: 50%;
-        bottom: clamp(8px, 1.5vw, 12px);
-        transform: translateX(-50%) translateY(20px);
-        padding: clamp(5px,1vw,7px) clamp(12px,2vw,16px);
-        background: var(--more-btn-bg);
-        color: var(--more-btn-text);
-        border: 1px solid var(--more-btn-border);
-        border-radius: 999px;
-        font-size: clamp(10px,1.8vw,12px);
-        font-weight: 600;
-        white-space: nowrap;
-        cursor: pointer;
-        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
-        opacity: 0;
-        visibility: hidden;
-        transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s ease;
-        z-index: 4;
-    }
-
-    .card.winner-white:hover .more-btn,
-    .card.winner-gold:hover .more-btn,
-    .card.winner-gold-big:hover .more-btn,
-    .card.winner-gold-medium:hover .more-btn,
-    .card.winner-gold-super:hover .more-btn {
-        opacity: 1;
-        visibility: visible;
-        transform: translateX(-50%) translateY(0);
-    }
-
-    .modal-mask {
-        position: fixed;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.45);
-        display: none;
-        align-items: center;
-        justify-content: center;
-        z-index: 99;
-    }
-
-    .modal-mask.show {
-        display: flex;
-        animation: fadeIn 0.25s ease;
-    }
-
-    .modal {
-        background: var(--popup-bg);
-        color: var(--popup-text);
-        border: 1px solid var(--popup-border);
-        border-radius: 16px;
-        padding: clamp(20px, 4vw, 26px) clamp(22px,4vw,30px);
-        max-width: 360px;
-        width: 85%;
-        text-align: center;
-        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
-        animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-
-    .modal p {
-        font-size: 16px;
-        line-height: 1.8;
-        margin-bottom: 18px;
-    }
-
-    .modal .close-btn {
-        padding: 8px 24px;
-        background: var(--btn-bg);
-        color: white;
-        border: none;
-        border-radius: 10px;
-        font-size: 14px;
-        cursor: pointer;
-        transition: var(--transition);
-    }
-
-    .modal .close-btn:hover {
-        background: var(--btn-hover);
-    }
-
-    @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-    }
-
-    @keyframes popIn {
-        from {
-            transform: scale(0.7);
-            opacity: 0;
-        }
-        to {
-            transform: scale(1);
-            opacity: 1;
-        }
-    }
+}
 </style>
 </head>
-<body>
-    <div class="wrap">
-        <div class="header">
-            <h1>🎰 抽奖面板</h1>
-            <div class="btn-group">
-                <button id="toggleBtn" class="btn">切换黑夜/白天</button>
-                <button id="startBtn" class="btn">开始抽奖</button>
-            </div>
+<body class="light">
+<div class="container">
+    <div class="top-bar">
+        <button id="startBtn">开始抽奖</button>
+        <button id="themeBtn">切换黑夜/白天</button>
+    </div>
+    <div class="card-wrap" id="cardWrap">
+        <!-- 卡片1 -->
+        <div class="card" data-weight="100" data-particle="false">
+            <img src="game_1.png">
+            <div class="card-desc">对不起哈TAT<br>(不过下次运气好点就行啦)</div>
         </div>
-
-        <div class="card-grid" id="cardGrid">
-            <div class="card" data-index="0"><img src="game_1.png" alt="奖品1" /></div>
-            <div class="card" data-index="1"><img src="game_2.png" alt="奖品2" /></div>
-            <div class="card" data-index="2"><img src="game_2.png" alt="奖品3" /></div>
-            <div class="card" data-index="3"><img src="game_3.png" alt="奖品4" /></div>
-            <div class="card" data-index="4"><img src="game_4.png" alt="奖品5" /></div>
-            <div class="card" data-index="5"><img src="game_4.png" alt="奖品6" /></div>
-            <div class="card" data-index="6"><img src="game_5.png" alt="奖品7" /></div>
-            <div class="card" data-index="7"><img src="game_5.png" alt="奖品8" /></div>
-            <div class="card" data-index="8"><img src="game_1.png" alt="奖品9" /></div>
+        <!-- 卡片2 -->
+        <div class="card" data-weight="100" data-particle="false">
+            <img src="game_2.png">
+            <div class="card-desc">可以去吃零食！<br>（没有就出发去买awa）</div>
+        </div>
+        <!-- 卡片3 -->
+        <div class="card" data-weight="100" data-particle="false">
+            <img src="game_2.png">
+            <div class="card-desc">可以去吃零食！<br>（没有就出发去买awa）</div>
+        </div>
+        <!-- 卡片4 -->
+        <div class="card" data-weight="95" data-particle="false">
+            <img src="game_3.png">
+            <div class="card-desc">快快快买吃的去！！！</div>
+        </div>
+        <!-- 卡片5 -->
+        <div class="card" data-weight="85" data-particle="false">
+            <img src="game_1.png">
+            <div class="card-desc">奖品5</div>
+        </div>
+        <!-- 卡片6 -->
+        <div class="card" data-weight="85" data-particle="false">
+            <img src="game_1.png">
+            <div class="card-desc">奖品6</div>
+        </div>
+        <!-- 卡片7 -->
+        <div class="card" data-weight="75" data-particle="true">
+            <img src="game_5.png">
+            <div class="card-desc">共三局，规则如下：<br>1. 赢一局=吃零食<br>2. 赢两局=看电视30min<br>3. 赢三局=50元代金券<br>4. 高级不选也可以选低级</div>
+        </div>
+        <!-- 卡片8 -->
+        <div class="card" data-weight="75" data-particle="true">
+            <img src="game_5.png">
+            <div class="card-desc">共三局，规则如下：<br>1. 赢一局=吃零食<br>2. 赢两局=看电视30min<br>3. 赢三局=50元代金券<br>4. 高级不选也可以选低级</div>
+        </div>
+        <!-- 卡片9 -->
+        <div class="card" data-weight="100" data-particle="false">
+            <img src="game_1.png">
+            <div class="card-desc">对不起哈TAT<br>(不过下次运气好点就行啦)</div>
         </div>
     </div>
-
-    <div class="modal-mask" id="modalMask">
-        <div class="modal">
-            <p id="modalText"></p>
-            <button class="close-btn" id="closeBtn">我知道啦</button>
-        </div>
+    <!-- 访问统计区域 -->
+    <div class="visit-count">
+        <span>页面总访问：</span>
+        <span id="busuanzi_value_page_pv">0</span>
+        <span>次</span>
     </div>
+</div>
 
-    <script>
-        const cards = document.querySelectorAll('.card');
-        const startBtn = document.getElementById('startBtn');
-        const toggleBtn = document.getElementById('toggleBtn');
-        const modalMask = document.getElementById('modalMask');
-        const modalText = document.getElementById('modalText');
-        const closeBtn = document.getElementById('closeBtn');
-        const cardCount = cards.length;
+<script>
+//昼夜切换
+const body = document.body;
+const themeBtn = document.getElementById('themeBtn');
+themeBtn.onclick = ()=>{
+    body.classList.toggle('dark');
+    body.classList.toggle('light');
+}
 
-        const prizeList = [
-            { image: "game_1.png", message: "对不起哈TAT<br>（不过下次运气好点就行啦）", effect: "white" },
-            { image: "game_2.png", message: "可以去吃零食！<br>（没有就出发去买awa）", effect: "gold" },
-            { image: "game_2.png", message: "可以去吃零食！<br>（没有就出发去买awa）", effect: "gold" },
-            { image: "game_3.png", message: "快快快买吃的去！！！", effect: "gold-big" },
-            { image: "game_4.png", message: "看—电—视——", effect: "gold-medium" },
-            { image: "game_4.png", message: "看—电—视——", effect: "gold-medium" },
-            { image: "game_5.png", message: "共三局，规则如下：<br>1. 赢一局=吃零食<br>2. 赢两局=看电视30min<br>3. 赢三局=50元代金券<br>4. 高级不选也可以选低级", effect: "gold-super" },
-            { image: "game_5.png", message: "共三局，规则如下：<br>1. 赢一局=吃零食<br>2. 赢两局=看电视30min<br>3. 赢三局=50元代金券<br>4. 高级不选也可以选低级", effect: "gold-super" },
-            { image: "game_1.png", message: "对不起哈TAT<br>（不过下次运气好点就行啦）", effect: "white" }
-        ];
+const startBtn = document.getElementById('startBtn');
+const cards = document.querySelectorAll('.card');
+let isRolling = false;
+let rollTimer;
 
-        // ✅ 更新权重：奖品7、8(index6、7)=75
-        let weights = [100,100,100,95,85,85,75,75,100];
-        let isRunning = false;
+//权重随机算法
+function getRandomCard(){
+    let totalWeight = 0;
+    let list = [];
+    cards.forEach(card=>{
+        const w = Number(card.dataset.weight);
+        totalWeight += w;
+        list.push({el:card, weight:w});
+    })
+    let r = Math.random() * totalWeight;
+    for(let item of list){
+        r -= item.weight;
+        if(r <= 0) return item.el;
+    }
+    return list[0].el;
+}
 
-        toggleBtn.addEventListener('click', () => {
-            document.body.classList.toggle('dark');
-        });
+//粒子特效
+function createGoldParticle(){
+    for(let i=0;i<35;i++){
+        const p = document.createElement('div');
+        p.className = 'particle';
+        p.style.left = Math.random()*100 + 'vw';
+        p.style.top = Math.random()*100 + 'vh';
+        document.body.appendChild(p);
+        const dx = (Math.random()-0.5)*220;
+        const dy = (Math.random()-0.5)*220;
+        p.animate([
+            {transform:'translate(0,0)', opacity:1},
+            {transform:`translate(${dx}px,${dy}px)`, opacity:0}
+        ],{duration:900});
+        setTimeout(()=>p.remove(),900);
+    }
+}
 
-        function getWeightedIndex() {
-            const total = weights.reduce((sum, w) => sum + w, 0);
-            let random = Math.random() * total;
-            for (let i = 0; i < cardCount; i++) {
-                random -= weights[i];
-                if (random <= 0) return i;
-            }
-            return cardCount - 1;
-        }
+startBtn.onclick = async ()=>{
+    if(isRolling) return;
+    isRolling = true;
+    startBtn.disabled = true;
+    //重置
+    cards.forEach(c=>c.classList.remove('selected','swing'));
+    let idx = 0;
+    //持续遍历卡片
+    rollTimer = setInterval(()=>{
+        cards.forEach(c=>c.classList.remove('swing'));
+        cards[idx].classList.add('swing');
+        idx = (idx+1) % cards.length;
+    },75);
 
-        function burstParticles(card, type) {
-            const rect = card.getBoundingClientRect();
-            const centerX = rect.left + rect.width / 2;
-            const centerY = rect.top + rect.height / 2;
+    //抽奖结束
+    await new Promise(res=>setTimeout(res, 2200));
+    clearInterval(rollTimer);
+    const targetCard = getRandomCard();
+    cards.forEach(c=>c.classList.remove('swing'));
+    targetCard.classList.add('selected');
 
-            let count, distanceA, distanceB, durationA, durationB;
+    //高级奖品抖动+粒子
+    if(targetCard.dataset.particle === "true"){
+        document.body.classList.add('shake-all');
+        createGoldParticle();
+        setTimeout(()=>document.body.classList.remove('shake-all'),700);
+    }
+    isRolling = false;
+    startBtn.disabled = false;
+}
+</script>
 
-            if (type === "gold-super") {
-                count = 50;
-                distanceA = 160;
-                distanceB = 190;
-                durationA = 1200;
-                durationB = 700;
-            } else if (type === "gold-big") {
-                count = 42;
-                distanceA = 140;
-                distanceB = 160;
-                durationA = 1100;
-                durationB = 600;
-            } else if (type === "gold-medium") {
-                count = 34;
-                distanceA = 110;
-                distanceB = 130;
-                durationA = 1000;
-                durationB = 500;
-            } else if (type === "gold") {
-                count = 28;
-                distanceA = 90;
-                distanceB = 110;
-                durationA = 900;
-                durationB = 400;
-            } else {
-                count = 18;
-                distanceA = 60;
-                distanceB = 70;
-                durationA = 700;
-                durationB = 400;
-            }
-
-            for (let i = 0; i < count; i++) {
-                const p = document.createElement('span');
-                p.classList.add('particle', type);
-                document.body.appendChild(p);
-
-                const angle = (Math.PI * 2 * i) / count + Math.random() * 0.6;
-                const distance = distanceA + Math.random() * distanceB;
-                const endX = centerX + Math.cos(angle) * distance;
-                const endY = centerY + Math.sin(angle) * distance;
-
-                p.style.left = centerX + 'px';
-                p.style.top = centerY + 'px';
-
-                p.animate([
-                    { transform: 'translate(-50%, -50%) scale(0.4)', opacity: 1 },
-                    { transform: `translate(${endX - centerX}px, ${endY - centerY}px) scale(1.15)`, opacity: 1 },
-                    { transform: `translate(${endX - centerX}px, ${endY - centerY}px) scale(0)`, opacity: 0 }
-                ], {
-                    duration: durationA + Math.random() * durationB,
-                    easing: 'cubic-bezier(0.2, 0.8, 0.4, 1)',
-                    fill: 'forwards'
-                }).onfinish = () => p.remove();
-            }
-        }
-
-        function burstScreenGoldParticles(level = "normal") {
-            const count = level === "super" ? 80 : (level === "big" ? 60 : (level === "medium" ? 50 : 40));
-            for (let i = 0; i < count; i++) {
-                const p = document.createElement('span');
-                p.classList.add('screen-particle');
-                document.body.appendChild(p);
-
-                const size = level === "super"
-                    ? 11 + Math.random() * 16
-                    : level === "big"
-                        ? 9 + Math.random() * 14
-                        : level === "medium"
-                            ? 7 + Math.random() * 12
-                            : 6 + Math.random() * 10;
-
-                p.style.width = size + 'px';
-                p.style.height = size + 'px';
-                p.style.background = `radial-gradient(circle at 30% 30%, #fff4b8, #ffb800 55%, #ff8a00)`;
-                p.style.boxShadow = `0 0 12px #ffcf33, 0 0 22px rgba(255, 180, 0, 0.9)`;
-
-                const startX = window.innerWidth / 2;
-                const startY = window.innerHeight / 2;
-                const angle = Math.random() * Math.PI * 2;
-                const distance = level === "super"
-                    ? 280 + Math.random() * 360
-                    : level === "big"
-                        ? 240 + Math.random() * 320
-                        : level === "medium"
-                            ? 210 + Math.random() * 280
-                            : 180 + Math.random() * 260;
-                const endX = startX + Math.cos(angle) * distance;
-                const endY = startY + Math.sin(angle) * distance;
-
-                p.style.left = startX + 'px';
-                p.style.top = startY + 'px';
-
-                p.animate([
-                    { transform: 'translate(-50%, -50%) scale(0.3)', opacity: 1 },
-                    { transform: `translate(${endX - startX}px, ${endY - startY}px) scale(1.2)`, opacity: 1 },
-                    { transform: `translate(${endX - startX}px, ${endY - startY}px) scale(0)`, opacity: 0 }
-                ], {
-                    duration: level === "super"
-                        ? 1400 + Math.random() * 700
-                        : level === "big"
-                            ? 1200 + Math.random() * 600
-                            : level === "medium"
-                                ? 1100 + Math.random() * 550
-                                : 1000 + Math.random() * 500,
-                    easing: 'cubic-bezier(0.15, 0.6, 0.3, 1)',
-                    fill: 'forwards'
-                }).onfinish = () => p.remove();
-            }
-        }
-
-        function bindMoreButton(card, index) {
-            const btn = document.createElement('button');
-            btn.className = 'more-btn';
-            btn.type = 'button';
-            btn.textContent = '了解更多';
-            card.appendChild(btn);
-
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                modalText.innerHTML = prizeList[index].message;
-                modalMask.classList.add('show');
-            });
-        }
-
-        cards.forEach((card, index) => {
-            bindMoreButton(card, index);
-        });
-
-        closeBtn.addEventListener('click', () => {
-            modalMask.classList.remove('show');
-        });
-
-        modalMask.addEventListener('click', (e) => {
-            if (e.target === modalMask) {
-                modalMask.classList.remove('show');
-            }
-        });
-
-        function clearPreviousWinner() {
-            cards.forEach(c => {
-                c.classList.remove('winner-white', 'winner-gold', 'winner-gold-big', 'winner-gold-medium','winner-gold-super');
-            });
-            document.body.classList.remove('screen-shake', 'screen-shake-big','screen-shake-super');
-        }
-
-        function startLottery() {
-            if (isRunning) return;
-            isRunning = true;
-            startBtn.disabled = true;
-            startBtn.textContent = '抽奖中...';
-
-            clearPreviousWinner();
-
-            cards.forEach(c => {
-                c.classList.remove('active');
-            });
-
-            const winnerIndex = getWeightedIndex();
-            const laps = 2;
-            const slowSteps = 7;
-            const totalSteps = laps * cardCount + winnerIndex + slowSteps;
-
-            let currentStep = 0;
-            let currentIndex = 0;
-
-            function getInterval(step) {
-                if (step < totalSteps * 0.75) {
-                    return 70;
-                }
-                const progress = (step - totalSteps * 0.75) / (totalSteps * 0.25);
-                return 70 + progress * 380;
-            }
-
-            function step() {
-                cards[currentIndex].classList.remove('active');
-                currentIndex = (currentIndex + 1) % cardCount;
-                cards[currentIndex].classList.add('active');
-                currentStep++;
-
-                if (currentStep < totalSteps) {
-                    setTimeout(step, getInterval(currentStep));
-                } else {
-                    setTimeout(() => {
-                        cards[currentIndex].classList.remove('active');
-                        const effect = prizeList[currentIndex].effect;
-
-                        if (effect === "gold-super") {
-                            cards[currentIndex].classList.add('winner-gold-super');
-                            burstParticles(cards[currentIndex], "gold-super");
-                            burstScreenGoldParticles("super");
-                            document.body.classList.add('screen-shake-super');
-                        } else if (effect === "gold-big") {
-                            cards[currentIndex].classList.add('winner-gold-big');
-                            burstParticles(cards[currentIndex], "gold-big");
-                            burstScreenGoldParticles("big");
-                            document.body.classList.add('screen-shake-big');
-                        } else if (effect === "gold-medium") {
-                            cards[currentIndex].classList.add('winner-gold-medium');
-                            burstParticles(cards[currentIndex], "gold-medium");
-                            burstScreenGoldParticles("medium");
-                            document.body.classList.add('screen-shake');
-                        } else if (effect === "gold") {
-                            cards[currentIndex].classList.add('winner-gold');
-                            burstParticles(cards[currentIndex], "gold");
-                            burstScreenGoldParticles("normal");
-                            document.body.classList.add('screen-shake');
-                        } else if (effect === "white") {
-                            cards[currentIndex].classList.add('winner-white');
-                            burstParticles(cards[currentIndex], "white");
-                        } else {
-                            cards[currentIndex].classList.add('winner-white');
-                        }
-
-                        isRunning = false;
-                        startBtn.disabled = false;
-                        startBtn.textContent = '开始抽奖';
-                    }, 350);
-                }
-            }
-
-            step();
-        }
-
-        startBtn.addEventListener('click', startLottery);
-    </script>
+<!-- 不蒜子统计JS -->
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
 </body>
 </html>
