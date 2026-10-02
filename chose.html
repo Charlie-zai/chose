@@ -529,7 +529,8 @@
                 opacity: 1;
             }
         }
-        /* 访问计数样式，适配昼夜变量 */
+
+        /* ===新增访问计数样式，复用主题变量，不改动原有任何css=== */
         .visit-stat {
             margin-top: 24px;
             text-align: center;
@@ -559,7 +560,8 @@
             <div class="card" data-index="7"><img src="game_5.png" alt="奖品8" /></div>
             <div class="card" data-index="8"><img src="game_1.png" alt="奖品9" /></div>
         </div>
-        <!-- 访问统计，放在wrap内部底部，保持缩进 -->
+
+        <!-- ===新增访问计数DOM，放在wrap内部底部，不破坏原有布局=== -->
         <div class="visit-stat">
             <span>页面总访问：</span>
             <span id="busuanzi_value_page_pv">0</span>
@@ -595,7 +597,6 @@
             { image: "game_1.png", message: "对不起哈TAT<br>（不过下次运气好点就行啦）", effect: "white" }
         ];
 
-        // ✅ 更新权重：奖品7、8(index6、7)=75
         let weights = [100,100,100,95,85,85,75,75,100];
         let isRunning = false;
 
@@ -847,7 +848,7 @@
         startBtn.addEventListener('click', startLottery);
     </script>
 
-    <!-- 不蒜子统计JS -->
+    <!-- ===不蒜子访问统计JS，只新增，不改原有逻辑=== -->
     <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
 </body>
 </html>
